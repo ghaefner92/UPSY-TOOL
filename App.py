@@ -9,7 +9,6 @@ import time
 # Database setup
 DB_FILE = "tasks_db.sqlite"
 
-
 # Initialize SQLite Database
 def init_db():
     conn = sqlite3.connect(DB_FILE)
@@ -29,7 +28,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-
 # Load tasks from DB
 def load_tasks():
     conn = sqlite3.connect(DB_FILE)
@@ -37,11 +35,9 @@ def load_tasks():
     conn.close()
 
     if not df.empty:
-        df["Start_Date"] = pd.to_datetime(df["Start_Date"]).dt.strftime('%Y-%m-%d')  # Remove hours
-        df["End_Date"] = pd.to_datetime(df["End_Date"]).dt.strftime('%Y-%m-%d')  # Remove hours
+        df["Start_Date"] = pd.to_datetime(df["Start_Date"]).dt.strftime('%Y-%m-%d')
+        df["End_Date"] = pd.to_datetime(df["End_Date"]).dt.strftime('%Y-%m-%d')
     return df
-
-
 
 # Add new task
 def add_task(task, desc, priority, status, start_date, end_date, responsible):
@@ -54,15 +50,13 @@ def add_task(task, desc, priority, status, start_date, end_date, responsible):
     conn.commit()
     conn.close()
 
-
 # Delete task by ID
-def delete_task(task_ids):
+def delete_task(task_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.executemany("DELETE FROM tasks WHERE ID = ?", [(task_id,) for task_id in task_ids])
+    cursor.execute("DELETE FROM tasks WHERE ID = ?", (task_id,))
     conn.commit()
     conn.close()
-
 
 # Update task field
 def update_task(task_id, column, new_value):
@@ -72,116 +66,11 @@ def update_task(task_id, column, new_value):
     conn.commit()
     conn.close()
 
-
-# Function to close the app
-def close_app():
-    st.warning("🔴 Closing app...")
-    time.sleep(1)
-    os._exit(0)
-
-
 # Initialize database
 init_db()
 
-# 🔹 Background & Styling Fix
-st.markdown("""
-    <style>
-        /* 🌟 Make the app full width */
-        .main .block-container {
-            max-width: 180% !important;  /* Expands UI width */
-        }
-
-        /* 🌟 Increase Task Table & Gantt Chart Width */
-        [data-testid="stVerticalBlock"] {
-            width: 100% !important;  /* Makes tables and charts take full space */
-        }
-
-        /* 🌟 Soft Green Sidebar Background */
-        .stSidebar {
-            background-color: #A9DFBF !important;  /* Soft pastel green */
-            padding: 15px;
-            border-right: 3px solid #58D68D;  /* A deeper green accent */
-        }
-
-        /* 🌟 Sidebar Font Color (Dark for contrast) */
-        .stSidebar .stTextInput, .stSidebar .stSelectbox, .stSidebar .stTextArea {
-            color: #1C1C1C !important;  /* Dark Gray for readability */
-        }
-
-        /* 🌟 Sidebar Headers */
-        .stSidebar h1, .stSidebar h2, .stSidebar h3 {
-            color: #145A32 !important;  /* Dark green for nice contrast */
-        }
-
-        /* 🌟 Background Color (Soft for Contrast) */
-        .stApp {
-            background-color: #a452a9 !important;  /* Soft pastel blue */
-        }
-
-        /* 🌟 Main Text Color (Readable) */
-        .stText, .stButton, .stDownloadButton {
-            color: #2C3E50 !important;  /* Dark grayish-blue */
-        }
-
-        /* 🌟 Title Styling */
-        .title {
-            font-size: 30px;
-            font-weight: bold;
-            color: #2980b9;  /* Blue title */
-            text-align: left;
-            margin-bottom: 10px;
-        }
-
-        /* 🌟 Buttons */
-        .stButton>button {
-            background-color: #2980b9 !important;  /* Deep blue */
-            color: white !important;
-            border-radius: 10px;
-            font-size: 16px;
-            padding: 10px;
-        }
-
-        .stButton>button:hover {
-            background-color: #1a5276 !important;  /* Darker blue */
-        }
-
-        /* 🌟 Table Styling */
-        .dataframe {
-            font-size: 18px;
-            color: #34495e !important;  /* Darker grayish-blue */
-        }
-
-        /* 🌟 Exit Button */
-        .exit-btn {
-            background-color: #d63031;
-            color: white;
-            font-weight: bold;
-            padding: 10px 15px;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            display: inline-block;
-            font-size: 16px;
-            width: 140px;
-            margin: auto;
-        }
-
-        .exit-btn:hover {
-            background-color: #e74c3c;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-
-
-# 🔹 Load logo and title (Use local file OR online URL)
-logo_path = "logo.png"  # Change if needed
-try:
-    st.image(logo_path, width=280)
-except:
-    st.warning("⚠️ Logo not found, check the file path!")
-
-st.markdown("<h1 class='title'>✨  Arbeitsplaner UPSY-IMIQ</h1>", unsafe_allow_html=True)
+# Load Logo & Title
+st.markdown("<h1 style='color:#2980b9; font-size: 30px; font-weight: bold;'>✨ Arbeitsplaner UPSY-IMIQ</h1>", unsafe_allow_html=True)
 
 # Sidebar: Task Input Form
 with st.sidebar:
@@ -205,7 +94,7 @@ with st.sidebar:
 # Load task data
 tasks = load_tasks()
 
-# 🔹 Task Table with Editable Columns
+# Display Task List
 st.subheader("📋 Task List")
 if not tasks.empty:
     edited_tasks = st.data_editor(
@@ -228,17 +117,21 @@ if not tasks.empty:
                 update_task(row["ID"], col, row[col])
                 st.rerun()
 
-    # Fixed Delete Function
-    selected_tasks = st.multiselect("Select Task to Delete", tasks["Task"])
+    # Task Deletion - Now uses a compact dropdown
+    task_list = tasks["Task"].tolist()
+    if task_list:
+        if not tasks.empty:
+            task_options = tasks.set_index("ID")["Task"].to_dict()  # Create a dictionary {ID: Task}
+            selected_task_id = st.selectbox("Select Task to Delete", options=list(task_options.keys()),
+                                            format_func=lambda x: task_options[x])
 
-    if st.button("🗑 Delete Selected Task"):
-        if selected_tasks:
-            task_ids_to_delete = tasks[tasks["Task"].isin(selected_tasks)]["ID"].tolist()
-            delete_task(task_ids_to_delete)
-            st.success("✅ Task(s) deleted!")
-            st.rerun()
-        else:
-            st.warning("⚠️ Please select at least one task to delete.")
+            if st.button("🗑 Delete Task"):
+                delete_task(selected_task_id)
+                st.success(f"✅ Task '{task_options[selected_task_id]}' deleted!")
+                st.rerun()
+
+    else:
+        st.info("No tasks available to delete.")
 
 else:
     st.info("No tasks available. Add a task to get started!")
@@ -246,20 +139,26 @@ else:
 # 🔹 Export Data
 st.download_button("📥 Export to CSV", data=tasks.to_csv(index=False), file_name="tasks.csv", mime="text/csv")
 
-# 🔹 Gantt Chart
+# 🔹 Gantt Chart - Task Timeline (Fixed to remove hours)
 st.subheader("📊 Gantt Chart - Task Timeline")
 if not tasks.empty:
+    # Convert to proper datetime format
+    tasks["Start_Date"] = pd.to_datetime(tasks["Start_Date"])
+    tasks["End_Date"] = pd.to_datetime(tasks["End_Date"])
+
+    # Generate Gantt Chart
     fig = px.timeline(
         tasks, x_start="Start_Date", x_end="End_Date", y="Task", color="Priority",
         title="Task Timeline", labels={"Priority": "Priority Level"},
         color_discrete_map={"High": "#ff7675", "Medium": "#fdcb6e", "Low": "#00cec9"}
     )
-    fig.update_yaxes(categoryorder="total ascending")
+    fig.update_layout(xaxis=dict(type="date"))  # Ensure only dates appear
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("No tasks available to display in the Gantt chart.")
 
 # 🔴 Exit Button
-st.markdown('<button class="exit-btn" onclick="window.close()">🚪 Exit App</button>', unsafe_allow_html=True)
-if st.button("Force Close App"):
-    close_app()
+if st.button("🚪 Exit App"):
+    st.warning("🔴 Closing app...")
+    time.sleep(1)
+    os._exit(0)
