@@ -16,12 +16,12 @@ def init_db():
         CREATE TABLE IF NOT EXISTS tasks (
             ID INTEGER PRIMARY KEY AUTOINCREMENT,
             Task TEXT NOT NULL,
-            Beschreibung TEXT,
-            Prioritaet TEXT CHECK (Prioritaet IN ('High', 'Medium', 'Low')),
-            Status TEXT CHECK (Status IN ('Pending', 'In Progress', 'Completed')),
+            Beschreibung TEXT DEFAULT '',
+            Prioritaet TEXT CHECK (Prioritaet IN ('High', 'Medium', 'Low')) DEFAULT 'Medium',
+            Status TEXT CHECK (Status IN ('Pending', 'In Progress', 'Completed')) DEFAULT 'Pending',
             Start_Date TEXT NOT NULL,
             End_Date TEXT NOT NULL,
-            Verantwortlich TEXT
+            Verantwortlich TEXT DEFAULT ''
         )
     """)
     conn.commit()
@@ -116,19 +116,6 @@ if not tasks.empty:
         st.rerun()
 else:
     st.info("Keine Aufgaben verfügbar. Bitte Aufgaben hinzufügen!")
-
-# Gantt Chart
-st.markdown("""<h2 style='color:#2980b9;'>📊 Aufgabenzeitachse (Gantt-Diagramm)</h2>""", unsafe_allow_html=True)
-if not tasks.empty:
-    fig = px.timeline(
-        tasks, x_start="Start_Date", x_end="End_Date", y="Task", color="Prioritaet",
-        title="Aufgabenzeitachse", labels={"Prioritaet": "Prioritätslevel"},
-        color_discrete_map={"High": "#ff7675", "Medium": "#fdcb6e", "Low": "#00cec9"}
-    )
-    fig.update_layout(xaxis=dict(type="date"))
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("Keine Aufgaben verfügbar für das Gantt-Diagramm.")
 
 # Export Button
 st.download_button("📥 Exportieren als CSV", data=tasks.to_csv(index=False), file_name="tasks.csv", mime="text/csv")
