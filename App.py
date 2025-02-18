@@ -32,8 +32,8 @@ def load_tasks():
     df = pd.read_sql_query("SELECT * FROM tasks", conn)
     conn.close()
     if not df.empty:
-        df["Start_Date"] = pd.to_datetime(df["Start_Date"])
-        df["End_Date"] = pd.to_datetime(df["End_Date"])
+        df["Start_Date"] = pd.to_datetime(df["Start_Date"]).dt.date
+        df["End_Date"] = pd.to_datetime(df["End_Date"]).dt.date
     return df
 
 def add_task(task, desc, priority, status, start_date, end_date, responsible):
@@ -116,6 +116,19 @@ if not tasks.empty:
         st.rerun()
 else:
     st.info("Keine Aufgaben verfügbar. Bitte Aufgaben hinzufügen!")
+
+# Gantt Chart
+st.markdown("""<h2 style='color:#2980b9;'>📊 Aufgabenzeitachse (Gantt-Diagramm)</h2>""", unsafe_allow_html=True)
+if not tasks.empty:
+    fig = px.timeline(
+        tasks, x_start="Start_Date", x_end="End_Date", y="Task", color="Prioritaet",
+        title="Aufgabenzeitachse", labels={"Prioritaet": "Prioritätslevel"},
+        color_discrete_map={"High": "#ff7675", "Medium": "#fdcb6e", "Low": "#00cec9"}
+    )
+    fig.update_layout(xaxis=dict(type="date"))
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("Keine Aufgaben verfügbar für das Gantt-Diagramm.")
 
 # Export Button
 st.download_button("📥 Exportieren als CSV", data=tasks.to_csv(index=False), file_name="tasks.csv", mime="text/csv")
