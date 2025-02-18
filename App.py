@@ -17,7 +17,7 @@ def init_db():
             ID INTEGER PRIMARY KEY AUTOINCREMENT,
             Task TEXT NOT NULL,
             Beschreibung TEXT,
-            Priorität TEXT CHECK (Priorität IN ('High', 'Medium', 'Low')),
+            Prioritaet TEXT CHECK (Prioritaet IN ('High', 'Medium', 'Low')),
             Status TEXT CHECK (Status IN ('Pending', 'In Progress', 'Completed')),
             Start_Date TEXT NOT NULL,
             End_Date TEXT NOT NULL,
@@ -32,15 +32,15 @@ def load_tasks():
     df = pd.read_sql_query("SELECT * FROM tasks", conn)
     conn.close()
     if not df.empty:
-        df["Start_Date"] = pd.to_datetime(df["Start_Date"]).dt.strftime('%Y-%m-%d')
-        df["End_Date"] = pd.to_datetime(df["End_Date"]).dt.strftime('%Y-%m-%d')
+        df["Start_Date"] = pd.to_datetime(df["Start_Date"])
+        df["End_Date"] = pd.to_datetime(df["End_Date"])
     return df
 
 def add_task(task, desc, priority, status, start_date, end_date, responsible):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO tasks (Task, Beschreibung, Priorität, Status, Start_Date, End_Date, Verantwortlich)
+        INSERT INTO tasks (Task, Beschreibung, Prioritaet, Status, Start_Date, End_Date, Verantwortlich)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (task, desc, priority, status, start_date, end_date, responsible))
     conn.commit()
